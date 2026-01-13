@@ -90,3 +90,30 @@ func (c *Config) validate() error {
 	}
 	return nil
 }
+
+// EngineReadConfig is consumed by the read engine.
+// It must remain pure data (no flags, no os.Exit, no I/O).
+type EngineReadConfig struct {
+	TargetAddr   string
+	UnitID       uint8
+	FunctionCode uint8
+	Address      uint16
+	Quantity     uint16
+	Timeout      time.Duration
+	Strict       bool
+
+}
+
+// ToEngineRead converts CLI/test configuration into engine-safe config.
+func (c *Config) ToEngineRead() EngineReadConfig {
+	return EngineReadConfig{
+		TargetAddr:   c.TargetAddr,
+		UnitID:       c.UnitID,
+		FunctionCode: c.FunctionCode,
+		Address:      c.Address,
+		Quantity:     c.Quantity,
+		Timeout:      c.Timeout,
+		Strict:       c.Strict,
+
+	}
+}
