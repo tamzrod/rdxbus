@@ -7,9 +7,17 @@ If code conflicts with this document, **the document wins**.
 
 ---
 
-## 0. Absolute Rule (Non‑Negotiable)
+## 0. Absolute Rule (Non-Negotiable)
 
-**Every code snippet, discussion, or proposal MUST explicitly state the file path and package name.**
+**Every code snippet, discussion, or proposal MUST explicitly state the file path it applies to.**
+
+### Go-Specific Snippet Rules (Strict)
+
+There are **two and only two** valid forms of Go snippets.
+
+### A) Complete File Replacement
+
+Use this form **only** when the snippet represents the *entire file*.
 
 Required format:
 
@@ -21,14 +29,36 @@ package worker
 Rules:
 - File path must be exact and relative to repo root
 - `package` name must match the directory
-- Snippets without filenames are considered **invalid context**
-- Missing filenames will result in rejected or ignored changes
+- Imports may be included
+- The snippet replaces the whole file
+
+---
+
+### B) Partial Change (Addendum / Edit)
+
+Use this form for **ADD / REPLACE / REMOVE** operations.
+
+Required preamble (plain text, not code):
+
+```
+File: internal/worker/worker.go
+Action: ADD | REPLACE | REMOVE
+Location: e.g. “end of file”, “replace function ExecuteRead”
+```
+
+Rules:
+- **MUST NOT** include `package` declaration
+- **MUST NOT** include `import` block
+- Snippet must contain **only the delta**
+- Ambiguous intent = rejected change
+
+Missing file paths or ambiguous intent invalidate the discussion.
 
 This rule exists to:
 - prevent reference loss
 - stop accidental duplication
-- avoid ChatGPT or human guesswork
-- enforce architectural discipline
+- avoid AI or human guesswork
+- enforce copy-paste safety in Go
 
 ---
 
@@ -171,8 +201,8 @@ Those belong upstream.
 
 The following files are authoritative references:
 
-- `TREE.md` — file and directory structure
-- `GUIDELINES.md` — architectural rules (this file)
+- `docs/TREE.md` — file and directory structure
+- `docs/GUIDELINES.md` — architectural rules (this file)
 
 Any discussion, refactor, or feature proposal must reference them.
 
@@ -181,16 +211,16 @@ Any discussion, refactor, or feature proposal must reference them.
 ## 7. Change Discipline
 
 When adding new code:
-1. Include exact filename and package declaration
-2. Update `TREE.md` if structure changes
-3. Verify rules in this document are not violated
-4. Prefer reuse over extension
-5. Avoid premature abstraction
+1. Include exact filename
+2. Declare whether the snippet is a **complete file** or a **partial change**
+3. Follow the Go-specific snippet rules above
+4. Update `docs/TREE.md` if structure changes
+5. Prefer reuse over extension
+6. Avoid premature abstraction
 
 ---
 
 ## Final Rule
 
-> Missing filenames or missing package declarations
-> invalidate architectural discussion.
-
+> Ambiguous snippets break builds.
+> Ambiguity is more expensive than missing features.
