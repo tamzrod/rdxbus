@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/tamzrod/rdxbus/internal/config"
 	"github.com/tamzrod/rdxbus/internal/engine"
@@ -13,16 +14,20 @@ import (
 )
 
 func main() {
-	// Parse CLI configuration (CLI concern only)
+	// Friendly (easy) mode
+	if len(os.Args) > 1 && os.Args[1] == "easy" {
+		runEasy()
+		return
+	}
+
+	// Expert CLI (single read, legacy behavior)
 	cfg := config.Parse()
 
-	// Build engine (single execution throat)
 	eng := &engine.ModbusEngine{
 		TargetAddr: cfg.TargetAddr,
 		Strict:     cfg.Strict,
 	}
 
-	// Build engine request (pure data)
 	req := engine.Request{
 		UnitID:       cfg.UnitID,
 		FunctionCode: cfg.FunctionCode,
@@ -31,18 +36,18 @@ func main() {
 		Timeout:      cfg.Timeout,
 	}
 
-	// Execute exactly ONE request
-	ctx := context.Background()
-	wr := worker.Execute(ctx, eng, req)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	if wr.EngineResult.Err != nil {
-		fmt.Fprintln(os.Stderr, "read error:", wr.EngineResult.Err)
+	res := worker.Execute(ctx, eng, req)
+
+	if res.EngineResult.Err != nil {
+		fmt.Fprintln(os.Stderr, "read error:", res.EngineResult.Err)
 		os.Exit(1)
 	}
 
-	// Decode values at the CLI/UI layer (optional, not engine responsibility)
 	values, err := format.DecodeReadValues(
-		wr.EngineResult.Raw,
+		res.EngineResult.Raw,
 		req.FunctionCode,
 		req.Quantity,
 	)
@@ -51,8 +56,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Output
 	fmt.Println("read successful")
-	fmt.Println("latency:", wr.EngineResult.Duration)
+	fmt.Println("latency:", res.EngineResult.Duration)
 	fmt.Println("values:", values)
 }
